@@ -100,16 +100,16 @@ local function targetFrame (self, forceNormalTexture)
 	end
 	self.healthbar.lockColor = true;
 	if ( cfg.whoaTexture == true) then
-		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\statusbar\\whoa");
+		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa");
 	end
 end
 hooksecurefunc(TargetFrame, "CheckClassification", targetFrame)
 
 local function targetFrameSelector (self, forceNormalTexture)
 	local classification = UnitClassification(self.unit);
-	local path = "Interface\\Addons\\whoaUnitFrames_Classic\\media\\light\\";
+	local path = "Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\";
 	if (cfg.darkFrames == true) then
-		path = "Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\"
+		path = "Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\"
 	end
 	if ( forceNormalTexture ) then
 		self.borderTexture:SetTexture(path.."UI-TargetingFrame");
@@ -130,22 +130,22 @@ local function targetFrameSelector (self, forceNormalTexture)
 		local factionGroup = UnitFactionGroup(self.unit);
 		if ( UnitIsPVPFreeForAll(self.unit) ) then
 			if cfg.darkFrames then
-				self.pvpIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\UI-PVP-FFA");
+				self.pvpIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-FFA");
 			else
 				self.pvpIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-FFA");
 			end
 		elseif ( factionGroup and factionGroup ~= "Neutral" and UnitIsPVP(self.unit) ) then
 			if cfg.darkFrames then
-				self.pvpIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\UI-PVP-"..factionGroup);
+				self.pvpIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-"..factionGroup);
 			else
 				self.pvpIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup);
 			end
 		end
 		if (UnitIsCivilian(self.unit)) then
 			if cfg.darkFrames then
-				self.questIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\PortraitWarningBadge");
+				self.questIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\PortraitWarningBadge");
 			else
-				self.questIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\light\\PortraitWarningBadge");
+				self.questIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\PortraitWarningBadge");
 			end
 			self.questIcon:Show();
 		else
@@ -163,7 +163,7 @@ local function manabarTexture (manaBar)
 	if ( info ) then
 		if ( not manaBar.lockColor ) then
 			if not ( info.atlas ) and ( cfg.statusbarTexture == true) then
-				manaBar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\statusbar\\whoa");
+				manaBar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa");
 			end
 		end
 	end
@@ -193,9 +193,9 @@ hooksecurefunc(TargetFrame, "CheckClassification", totFrame)
 
 local function totFrameSelector()
 	if ( cfg.darkFrames == true ) then
-		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\UI-TargetofTargetFrame");
+		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-TargetofTargetFrame");
 	elseif ( cfg.darkFrames == false ) then
-		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\light\\UI-TargetofTargetFrame");
+		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\UI-TargetofTargetFrame");
 	end
 end
 hooksecurefunc(TargetFrameToT, "Update", totFrameSelector)

@@ -1,9 +1,9 @@
 --	Player frame.
 local function playerFrame(self)
 	if (cfg.whoaTexture == true) then
-		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\statusbar\\whoa");
+		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa");
 	end
-	PlayerStatusTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\UI-Player-Status");
+	PlayerStatusTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\UI-Player-Status");
 	PlayerStatusTexture:ClearAllPoints();
 	PlayerStatusTexture:SetPoint("CENTER", PlayerFrame, "CENTER", -2, 4); -- 16, 8
 	PlayerFrameBackground:SetWidth(120)
@@ -70,10 +70,10 @@ hooksecurefunc("PlayerFrame_ToPlayerArt", playerFrame)
 
 local function playerFrameSelector(self)
 	if (cfg.darkFrames == true) then
-		PlayerFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\UI-TargetingFrame")
-		PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\UI-PVP-FFA")
+		PlayerFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-TargetingFrame")
+		PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-FFA")
 	elseif (cfg.darkFrames == false) then
-		PlayerFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\light\\UI-TargetingFrame")
+		PlayerFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\UI-TargetingFrame")
 		PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-FFA")
 	end
 end
@@ -83,7 +83,7 @@ function playerPvpIcon()
 	local factionGroup, factionName = UnitFactionGroup("player");
 	if ( factionGroup and factionGroup ~= "Neutral" and UnitIsPVP("player") ) then
 		if cfg.darkFrames then
-			PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic\\media\\dark\\UI-PVP-"..factionGroup);
+			PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-"..factionGroup);
 		else
 			PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup);
 		end

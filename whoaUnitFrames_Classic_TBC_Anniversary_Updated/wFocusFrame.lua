@@ -98,10 +98,10 @@ local function FocusFrameLayout(forceNormalTexture)
 	-- Statusbar texture
 	if cfg.whoaTexture then
 		healthBar:SetStatusBarTexture(
-			"Interface\\AddOns\\whoaUnitFrames_Classic\\media\\statusbar\\whoa"
+			"Interface\\AddOns\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa"
 		)
 		manaBar:SetStatusBarTexture(
-			"Interface\\AddOns\\whoaUnitFrames_Classic\\media\\statusbar\\whoa"
+			"Interface\\AddOns\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa"
 		)
 	end
 end
@@ -115,9 +115,9 @@ local function FocusFrameTextureSelector(forceNormalTexture)
 	local unit = "focus"
 	local classification = UnitClassification(unit)
 
-	local path = "Interface\\AddOns\\whoaUnitFrames_Classic\\media\\light\\"
+	local path = "Interface\\AddOns\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\"
 	if cfg.darkFrames then
-		path = "Interface\\AddOns\\whoaUnitFrames_Classic\\media\\dark\\"
+		path = "Interface\\AddOns\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\"
 	end
 
 	if forceNormalTexture then
