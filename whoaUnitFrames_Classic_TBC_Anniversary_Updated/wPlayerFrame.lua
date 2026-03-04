@@ -1,7 +1,16 @@
+--========================================================
+-- Player Frame Styling
+--========================================================
+
+-- Role indicator
+local function updatePlayerRoleIndicator()
+	createRoleIndicator(PlayerFrame, "player")
+end
+
 --	Player frame.
 local function playerFrame(self)
-	if (cfg.whoaTexture == true) then
-		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa");
+	if cfg.whoaTexture then
+		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa")
 	end
 	PlayerStatusTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\UI-Player-Status");
 	PlayerStatusTexture:ClearAllPoints();
@@ -65,27 +74,38 @@ local function playerFrame(self)
 	PlayerFrameGroupIndicatorLeft:Hide();
 	PlayerFrameGroupIndicatorMiddle:Hide();
 	PlayerFrameGroupIndicatorRight:Hide();
+
+	-- Create and update party role indicator
+	updatePlayerRoleIndicator()
 end
 hooksecurefunc("PlayerFrame_ToPlayerArt", playerFrame)
 
+--========================================================
+-- Player Frame Textures
+--========================================================
+
 local function playerFrameSelector(self)
-	if (cfg.darkFrames == true) then
+	if cfg.darkFrames then
 		PlayerFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-TargetingFrame")
 		PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-FFA")
-	elseif (cfg.darkFrames == false) then
+	else
 		PlayerFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\UI-TargetingFrame")
 		PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-FFA")
 	end
 end
 hooksecurefunc("PlayerFrame_ToPlayerArt", playerFrameSelector)
 
+--========================================================
+-- Player PvP Icon
+--========================================================
+
 function playerPvpIcon()
-	local factionGroup, factionName = UnitFactionGroup("player");
-	if ( factionGroup and factionGroup ~= "Neutral" and UnitIsPVP("player") ) then
+	local factionGroup = UnitFactionGroup("player")
+	if factionGroup and factionGroup ~= "Neutral" and UnitIsPVP("player") then
 		if cfg.darkFrames then
-			PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-"..factionGroup);
+			PlayerPVPIcon:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-PVP-" .. factionGroup)
 		else
-			PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup);
+			PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-" .. factionGroup)
 		end
 	end
 end
@@ -134,4 +154,29 @@ local function petFrame()
 	end
 end
 hooksecurefunc("PlayerFrame_ToPlayerArt", petFrame)
+
+-- Event handler for role changes
+local roleFrame = CreateFrame("Frame")
+roleFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
+roleFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+roleFrame:RegisterEvent("PLAYER_LOGIN")
+roleFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+roleFrame:SetScript("OnEvent", function()
+	-- Add a small delay to ensure data is available
+	C_Timer.After(0.1, function()
+		updatePlayerRoleIndicator()
+	end)
+end)
+
+-- Also check periodically when in a group
+local checkFrame = CreateFrame("Frame")
+checkFrame:SetScript("OnUpdate", function(self, elapsed)
+	self.timer = (self.timer or 0) + elapsed
+	if self.timer > 1 then  -- Check every second
+		if IsInGroup() then
+			updatePlayerRoleIndicator()
+		end
+		self.timer = 0
+	end
+end)
 

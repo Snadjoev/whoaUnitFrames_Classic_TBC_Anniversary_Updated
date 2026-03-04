@@ -104,6 +104,9 @@ local function FocusFrameLayout(forceNormalTexture)
 			"Interface\\AddOns\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa"
 		)
 	end
+	
+	-- Create and update role indicator
+	createRoleIndicator(FocusFrame, "focus")
 end
 
 --========================================================
@@ -149,6 +152,7 @@ f:SetScript("OnEvent", function(_, event, unit)
 
 	FocusFrameLayout()
 	FocusFrameTextureSelector()
+	createRoleIndicator(FocusFrame, "focus")
 end)
 
 --========================================================
@@ -157,4 +161,31 @@ end)
 FocusFrame:HookScript("OnShow", function()
 	FocusFrameLayout()
 	FocusFrameTextureSelector()
+	createRoleIndicator(FocusFrame, "focus")
+end)
+
+-- Event handler for focus role changes
+local focusRoleFrame = CreateFrame("Frame")
+focusRoleFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+focusRoleFrame:RegisterEvent("UNIT_FACTION")
+focusRoleFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+focusRoleFrame:SetScript("OnEvent", function(_, event, unit)
+	if event == "UNIT_FACTION" and unit ~= "focus" then return end
+	if FocusFrame:IsShown() then
+		C_Timer.After(0.1, function()
+			createRoleIndicator(FocusFrame, "focus")
+		end)
+	end
+end)
+
+-- Persistent check for focus role
+local focusCheckFrame = CreateFrame("Frame")
+focusCheckFrame:SetScript("OnUpdate", function(self, elapsed)
+	self.timer = (self.timer or 0) + elapsed
+	if self.timer > 0.5 then
+		if FocusFrame:IsShown() and UnitExists("focus") then
+			createRoleIndicator(FocusFrame, "focus")
+		end
+		self.timer = 0
+	end
 end)

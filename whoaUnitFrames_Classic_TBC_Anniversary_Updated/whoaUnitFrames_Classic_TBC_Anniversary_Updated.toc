@@ -5,9 +5,11 @@
 ## Version: 1.5
 ## SavedVariables: cfg
 
+## Category: User Interface
 
 whoaUnitFrames.lua
 wPlayerFrame.lua
 wTargetFrame.lua
 wFocusFrame.lua
+wPartyFrames.lua
 wSettings.lua

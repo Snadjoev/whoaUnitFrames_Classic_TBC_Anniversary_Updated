@@ -1,4 +1,7 @@
---	Target frame
+--========================================================
+-- Target Frame Styling
+--========================================================
+
 local function targetFrame (self, forceNormalTexture)
 	local classification = UnitClassification(self.unit);
 	self.highLevelTexture:ClearAllPoints();
@@ -99,19 +102,25 @@ local function targetFrame (self, forceNormalTexture)
 		end		
 	end
 	self.healthbar.lockColor = true;
-	if ( cfg.whoaTexture == true) then
-		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa");
-	end
+	if cfg.whoaTexture then
+		self.healthbar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa")
+	end	
+	-- Create and update role indicator
+	createRoleIndicator(TargetFrame, "target")
 end
 hooksecurefunc(TargetFrame, "CheckClassification", targetFrame)
 
+--========================================================
+-- Target Frame Textures
+--========================================================
+
 local function targetFrameSelector (self, forceNormalTexture)
-	local classification = UnitClassification(self.unit);
-	local path = "Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\";
-	if (cfg.darkFrames == true) then
-		path = "Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\"
-	end
-	if ( forceNormalTexture ) then
+	local classification = UnitClassification(self.unit)
+	local path = cfg.darkFrames and
+		"Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\" or
+		"Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\"
+	
+	if forceNormalTexture then
 		self.borderTexture:SetTexture(path.."UI-TargetingFrame");
 	elseif ( classification == "minus" ) then
 		self.borderTexture:SetTexture(path.."UI-TargetingFrame-Minus");
@@ -157,20 +166,27 @@ end
 hooksecurefunc(TargetFrame, "CheckClassification", targetFrameSelector)
 
 -- Mana texture
-local function manabarTexture (manaBar)
-	local powerType, powerToken, altR, altG, altB = UnitPowerType(manaBar.unit);
-	local info = PowerBarColor[powerToken];
-	if ( info ) then
-		if ( not manaBar.lockColor ) then
-			if not ( info.atlas ) and ( cfg.statusbarTexture == true) then
-				manaBar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa");
+local function manabarTexture(manaBar)
+	local powerType, powerToken, altR, altG, altB = UnitPowerType(manaBar.unit)
+	local info = PowerBarColor[powerToken]
+	if info then
+		if not manaBar.lockColor then
+			if not info.atlas then
+				if cfg.whoaTexture then
+					manaBar:SetStatusBarTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\statusbar\\whoa")
+				else
+					manaBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+				end
 			end
 		end
 	end
 end
 hooksecurefunc("UnitFrameManaBar_UpdateType", manabarTexture)
 
---	ToT
+--========================================================
+-- Target of Target Frame
+--========================================================
+
 local function totFrame()
 	TargetFrameToTTextureFrameDeadText:ClearAllPoints();
 	TargetFrameToTTextureFrameDeadText:SetPoint("CENTER", "TargetFrameToTHealthBar","CENTER",1, 0);
@@ -191,12 +207,52 @@ end
 hooksecurefunc(TargetFrameToT, "Update", totFrame)
 hooksecurefunc(TargetFrame, "CheckClassification", totFrame)
 
+-- Ensure ToT health bar color updates properly
+local function updateToTHealthColor()
+	if TargetFrameToT and TargetFrameToT.healthbar and UnitExists("targettarget") then
+		-- Trigger the color update hooks
+		if TargetFrameToT.healthbar.unit then
+			C_Timer.After(0, function()
+				if UnitFrameHealthBar_Update then
+					UnitFrameHealthBar_Update(TargetFrameToT.healthbar, "targettarget")
+				end
+			end)
+		end
+	end
+end
+hooksecurefunc(TargetFrameToT, "Update", updateToTHealthColor)
+
 local function totFrameSelector()
-	if ( cfg.darkFrames == true ) then
-		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-TargetofTargetFrame");
-	elseif ( cfg.darkFrames == false ) then
-		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\UI-TargetofTargetFrame");
+	if cfg.darkFrames then
+		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\dark\\UI-TargetofTargetFrame")
+	else
+		TargetFrameToTTextureFrameTexture:SetTexture("Interface\\Addons\\whoaUnitFrames_Classic_TBC_Anniversary_Updated\\media\\light\\UI-TargetofTargetFrame")
 	end
 end
 hooksecurefunc(TargetFrameToT, "Update", totFrameSelector)
 hooksecurefunc(TargetFrame, "CheckClassification", totFrameSelector)
+
+-- Event handler for target role changes
+local targetRoleFrame = CreateFrame("Frame")
+targetRoleFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+targetRoleFrame:RegisterEvent("UNIT_FACTION")
+targetRoleFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+targetRoleFrame:SetScript("OnEvent", function()
+	if TargetFrame:IsShown() then
+		C_Timer.After(0.1, function()
+			createRoleIndicator(TargetFrame, "target")
+		end)
+	end
+end)
+
+-- Persistent check for target role
+local targetCheckFrame = CreateFrame("Frame")
+targetCheckFrame:SetScript("OnUpdate", function(self, elapsed)
+	self.timer = (self.timer or 0) + elapsed
+	if self.timer > 0.5 then
+		if TargetFrame:IsShown() and UnitExists("target") then
+			createRoleIndicator(TargetFrame, "target")
+		end
+		self.timer = 0
+	end
+end)

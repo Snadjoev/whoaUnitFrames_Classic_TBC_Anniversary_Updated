@@ -8,22 +8,34 @@ cfg  = cfg  or {}
 -- Defaults
 --========================================================
 local function SetDefaults()
-	cfg.smallAuraSize            = cfg.smallAuraSize            or 20
-	cfg.largeAuraSize            = cfg.largeAuraSize            or 25
-	cfg.classColor               = cfg.classColor               or true
-	cfg.reactionColor            = cfg.reactionColor            or true
-	cfg.BlizzardReactionColor    = cfg.BlizzardReactionColor    or true
-	cfg.noClickFrame             = cfg.noClickFrame             or false
-	cfg.blueShaman               = cfg.blueShaman               or true
-	cfg.usePartyFrames           = cfg.usePartyFrames           or true
-	cfg.styleFont                = cfg.styleFont                or true
-	cfg.bigAuras                 = cfg.bigAuras                 or true
-	cfg.useBossFrames            = cfg.useBossFrames            or true
-	cfg.whoaTexture              = cfg.whoaTexture              or true
-	cfg.darkFrames               = cfg.darkFrames               or false
-	-- Handle boolean settings that can be false - only set default if nil
+	-- Assign defaults only if value is nil
+	if cfg.smallAuraSize == nil then cfg.smallAuraSize = 20 end
+	if cfg.largeAuraSize == nil then cfg.largeAuraSize = 25 end
+	if cfg.classColor == nil then cfg.classColor = true end
+	if cfg.reactionColor == nil then cfg.reactionColor = true end
+	if cfg.BlizzardReactionColor == nil then cfg.BlizzardReactionColor = true end
+	if cfg.noClickFrame == nil then cfg.noClickFrame = false end
+	if cfg.blueShaman == nil then cfg.blueShaman = true end
+	if cfg.usePartyFrames == nil then cfg.usePartyFrames = true end
+	if cfg.styleFont == nil then cfg.styleFont = true end
+	if cfg.bigAuras == nil then cfg.bigAuras = true end
+	if cfg.useBossFrames == nil then cfg.useBossFrames = true end
+	if cfg.whoaTexture == nil then cfg.whoaTexture = true end
+	if cfg.darkFrames == nil then cfg.darkFrames = false end
 	if cfg.showNameBackground == nil then cfg.showNameBackground = true end
 	if cfg.showPlayerName == nil then cfg.showPlayerName = true end
+	if cfg.partyFrameScale == nil then cfg.partyFrameScale = 1.0 end
+	if cfg.lockPartyFrames == nil then cfg.lockPartyFrames = false end
+	-- Store scale as integer (10-30) for better settings compatibility, divide by 20 to get 0.5-1.5
+	if cfg.partyFrameScaleInt == nil then 
+		cfg.partyFrameScaleInt = 20  -- 20/20 = 1.0 default
+	end
+	-- Maintain partyFrameScale for backward compatibility
+	if cfg.partyFrameScale == nil then
+		cfg.partyFrameScale = cfg.partyFrameScaleInt / 20
+	end
+	if cfg.useWhoaPartyFrames == nil then cfg.useWhoaPartyFrames = true end
+	if cfg.showPhantomParty == nil then cfg.showPhantomParty = false end
 end
 
 SetDefaults()
@@ -137,6 +149,7 @@ function whoa:CreateUI()
 	cbDark:SetChecked(cfg.darkFrames)
 	cbDark:SetScript("OnClick", function(self)
 		cfg.darkFrames = self:GetChecked()
+		if ShowOrHidePhantomPartyFrame then ShowOrHidePhantomPartyFrame() end
 	end)
 	whoa.checkboxes.cbDark = cbDark
 
@@ -155,6 +168,11 @@ function whoa:CreateUI()
 	cbTexture:SetChecked(not cfg.whoaTexture)
 	cbTexture:SetScript("OnClick", function(self)
 		cfg.whoaTexture = not self:GetChecked()
+		-- Update heal prediction textures immediately
+		if UpdateAllHealPredictionTextures then
+			UpdateAllHealPredictionTextures()
+		end
+		if ShowOrHidePhantomPartyFrame then ShowOrHidePhantomPartyFrame() end
 	end)
 	whoa.checkboxes.cbTexture = cbTexture
 
@@ -164,6 +182,7 @@ function whoa:CreateUI()
 	cbNameBG:SetChecked(cfg.showNameBackground)
 	cbNameBG:SetScript("OnClick", function(self)
 		cfg.showNameBackground = self:GetChecked()
+		if ShowOrHidePhantomPartyFrame then ShowOrHidePhantomPartyFrame() end
 	end)
 	whoa.checkboxes.cbNameBG = cbNameBG
 
@@ -171,8 +190,69 @@ function whoa:CreateUI()
 	cbPlayerName:SetChecked(cfg.showPlayerName)
 	cbPlayerName:SetScript("OnClick", function(self)
 		cfg.showPlayerName = self:GetChecked()
+		if ShowOrHidePhantomPartyFrame then ShowOrHidePhantomPartyFrame() end
 	end)
 	whoa.checkboxes.cbPlayerName = cbPlayerName
+
+	y = y - 40
+	whoa:CreateFont(panel, nil, "Party Frame Scale", 16, y)
+	y = y - 30
+
+	-- Scale slider (stores as integer 10-30, displays as 50%-150%)
+	local scaleSlider = CreateFrame("Slider", "whoaPartyScaleSlider", panel, "OptionsSliderTemplate")
+	scaleSlider:SetPoint("TOPLEFT", 16, y)
+	scaleSlider:SetMinMaxValues(10, 30)
+	scaleSlider:SetValue(cfg.partyFrameScaleInt or 20)
+	scaleSlider:SetValueStep(1)
+	scaleSlider:SetObeyStepOnDrag(true)
+	scaleSlider:SetWidth(200)
+	
+	_G[scaleSlider:GetName() .. "Low"]:SetText("50%")
+	_G[scaleSlider:GetName() .. "High"]:SetText("150%")
+	_G[scaleSlider:GetName() .. "Text"]:SetText(string.format("%d%%", (cfg.partyFrameScaleInt or 20) * 5))
+	scaleSlider:SetScript("OnValueChanged", function(self, value)
+		value = math.floor(value + 0.5)  -- Round to nearest integer
+		cfg.partyFrameScaleInt = value
+		cfg.partyFrameScale = value / 20  -- Update actual scale value
+		_G[self:GetName() .. "Text"]:SetText(string.format("%d%%", value * 5))
+		if ShowOrHidePhantomPartyFrame then ShowOrHidePhantomPartyFrame() end
+	end)
+	whoa.scaleSlider = scaleSlider
+	
+	-- Scale info text
+	local scaleInfo = whoa:CreateFont(panel, nil, "(Scale applies live to phantom; real frames need /reload)", 230, y + 15, nil, 10)
+	scaleInfo:SetTextColor(1, 0.82, 0)
+
+	y = y - 40
+
+	local cbWhoaParty = CreateCheckButton(panel, 16, y, "Use whoa party frames")
+	cbWhoaParty:SetChecked(cfg.useWhoaPartyFrames)
+	cbWhoaParty:SetScript("OnClick", function(self)
+		cfg.useWhoaPartyFrames = self:GetChecked()
+		print("|cffffff00Party frame setting changed. Please /reload to apply.|r")
+	end)
+	whoa.checkboxes.cbWhoaParty = cbWhoaParty
+
+	y = y - 30
+
+	local cbLockParty = CreateCheckButton(panel, 16, y, "Lock party frames (disable dragging)")
+	cbLockParty:SetChecked(cfg.lockPartyFrames)
+	cbLockParty:SetScript("OnClick", function(self)
+		cfg.lockPartyFrames = self:GetChecked()
+	end)
+	whoa.checkboxes.cbLockParty = cbLockParty
+
+	y = y - 30
+
+	local cbPhantom = CreateCheckButton(panel, 16, y, "Show phantom party frame (preview when solo)")
+	cbPhantom:SetChecked(cfg.showPhantomParty)
+	cbPhantom:SetScript("OnClick", function(self)
+		cfg.showPhantomParty = self:GetChecked()
+		if ShowOrHidePhantomPartyFrame then
+			ShowOrHidePhantomPartyFrame()
+		end
+	end)
+	whoa.checkboxes.cbPhantom = cbPhantom
 
 	-- Buttons
 	local center = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -190,9 +270,22 @@ function whoa:CreateUI()
 		TargetFrame:SetUserPlaced(true)
 	end)
 
+	local resetParty = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+	resetParty:SetSize(150, 22)
+	resetParty:SetPoint("BOTTOMLEFT", 290, 16)
+	resetParty:SetText("Reset party frames")
+	resetParty:SetScript("OnClick", function()
+		if InCombatLockdown() then
+			print("|cffffff00Cannot reset party frames in combat.|r")
+			return
+		end
+		cfg.partyFramePositions = nil
+		print("|cffffff00Party frame positions cleared. Please /reload to apply.|r")
+	end)
+
 	local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 	reset:SetSize(120, 22)
-	reset:SetPoint("LEFT", center, "RIGHT", 10, 0)
+	reset:SetPoint("BOTTOMLEFT", 146, 16)
 	reset:SetText("Reset frames")
 	reset:SetScript("OnClick", function()
 		PlayerFrame_ResetUserPlacedPosition()
@@ -209,10 +302,41 @@ end
 whoa:CreateUI()
 
 --========================================================
+-- Function to sync all checkboxes with current cfg values
+--========================================================
+local function SyncCheckboxes()
+	if not whoa.checkboxes then return end
+	
+	whoa.checkboxes.cbClass:SetChecked(cfg.classColor)
+	whoa.checkboxes.cbBlue:SetChecked(cfg.blueShaman)
+	whoa.checkboxes.cbReaction:SetChecked(cfg.reactionColor)
+	whoa.checkboxes.cbBright:SetChecked(cfg.BlizzardReactionColor)
+	whoa.checkboxes.cbDark:SetChecked(cfg.darkFrames)
+	whoa.checkboxes.cbFont:SetChecked(not cfg.styleFont)
+	whoa.checkboxes.cbTexture:SetChecked(not cfg.whoaTexture)
+	whoa.checkboxes.cbNameBG:SetChecked(cfg.showNameBackground)
+	whoa.checkboxes.cbPlayerName:SetChecked(cfg.showPlayerName)
+	whoa.checkboxes.cbWhoaParty:SetChecked(cfg.useWhoaPartyFrames)
+	whoa.checkboxes.cbLockParty:SetChecked(cfg.lockPartyFrames)
+	if whoa.checkboxes.cbPhantom then
+		whoa.checkboxes.cbPhantom:SetChecked(cfg.showPhantomParty)
+	end
+end
+
+--========================================================
 -- Register Settings category
 --========================================================
 local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
 Settings.RegisterAddOnCategory(category)
+
+-- Sync checkboxes whenever the panel is shown
+panel:SetScript("OnShow", function()
+	SyncCheckboxes()
+	-- Sync slider value using integer storage
+	if whoa.scaleSlider then
+		whoa.scaleSlider:SetValue(cfg.partyFrameScaleInt or 20)
+	end
+end)
 
 --========================================================
 -- Slash commands
@@ -226,6 +350,41 @@ end
 SLASH_RL1 = "/rl"
 SlashCmdList.RL = ReloadUI
 
+SLASH_RESETPARTY1 = "/resetparty"
+SlashCmdList.RESETPARTY = function()
+	if InCombatLockdown() then
+		print("|cffffff00Cannot reset party frames in combat.|r")
+		return
+	end
+	cfg.partyFramePositions = {}
+	-- Also clear SetUserPlaced flag on existing frames
+	if _G.customPartyFrames then
+		for i = 1, 5 do
+			if _G.customPartyFrames[i] then
+				_G.customPartyFrames[i]:SetUserPlaced(false)
+			end
+		end
+	end
+	print("|cffffff00Party frame positions cleared. Please /reload to apply.|r")
+end
+
+SLASH_SHOWPARTY1 = "/showparty"
+SlashCmdList.SHOWPARTY = function()
+	if cfg.partyFramePositions then
+		print("|cffffff00Saved party positions:|r")
+		for i = 1, 5 do
+			if cfg.partyFramePositions[i] then
+				local pos = cfg.partyFramePositions[i]
+				print(string.format("Frame %d: %s, %s, %.1f, %.1f", i, pos[1] or "nil", pos[2] or "nil", pos[3] or 0, pos[4] or 0))
+			else
+				print(string.format("Frame %d: no saved position", i))
+			end
+		end
+	else
+		print("|cffffff00No saved party positions.|r")
+	end
+end
+
 --========================================================
 -- Events
 --========================================================
@@ -234,21 +393,11 @@ eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 eventFrame:SetScript("OnEvent", function(_, event, addon)
-	if event == "ADDON_LOADED" and addon == "whoaUnitFrames_Classic" then
+	if event == "ADDON_LOADED" and addon == "whoaUnitFrames_Classic_TBC_Anniversary_Updated" then
 		SetDefaults()
 		
 		-- Update all checkboxes to reflect saved values
-		if whoa.checkboxes then
-			whoa.checkboxes.cbClass:SetChecked(cfg.classColor)
-			whoa.checkboxes.cbBlue:SetChecked(cfg.blueShaman)
-			whoa.checkboxes.cbReaction:SetChecked(cfg.reactionColor)
-			whoa.checkboxes.cbBright:SetChecked(cfg.BlizzardReactionColor)
-			whoa.checkboxes.cbDark:SetChecked(cfg.darkFrames)
-			whoa.checkboxes.cbFont:SetChecked(not cfg.styleFont)
-			whoa.checkboxes.cbTexture:SetChecked(not cfg.whoaTexture)
-			whoa.checkboxes.cbNameBG:SetChecked(cfg.showNameBackground)
-			whoa.checkboxes.cbPlayerName:SetChecked(cfg.showPlayerName)
-		end
+		SyncCheckboxes()
 
 		if cfg.noClickFrame then
 			PlayerFrame:SetMouseClickEnabled(false)
@@ -258,14 +407,20 @@ eventFrame:SetScript("OnEvent", function(_, event, addon)
 		
 		-- Force update frames to apply settings on load
 		C_Timer.After(0.5, function()
+			-- Use pcall to prevent taint errors from Update calls
 			if PlayerFrame and PlayerFrame.Update then
-				PlayerFrame.Update(PlayerFrame)
+				pcall(PlayerFrame.Update, PlayerFrame)
 			end
 			if TargetFrame and TargetFrame.Update then
-				TargetFrame.Update(TargetFrame)
+				pcall(TargetFrame.Update, TargetFrame)
 			end
 			if FocusFrame and FocusFrame.Update then
-				FocusFrame.Update(FocusFrame)
+				pcall(FocusFrame.Update, FocusFrame)
+			end
+			
+			-- Update heal prediction textures
+			if UpdateAllHealPredictionTextures then
+				UpdateAllHealPredictionTextures()
 			end
 		end)
 	end
